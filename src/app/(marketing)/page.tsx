@@ -3,7 +3,9 @@ import { CourseCard } from "@/components/course/course-card";
 import { mockCourses } from "@/lib/mock-data";
 
 export default function HomePage() {
-  const featuredCourses = mockCourses.slice(0, 3);
+  const featuredCourses = mockCourses
+    .filter((course) => course.status === "PUBLISHED")
+    .slice(0, 3);
 
   return (
     <>

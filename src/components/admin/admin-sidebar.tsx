@@ -1,6 +1,9 @@
 import { NavLink } from "@/components/app/nav-link";
 
-const links = [{ href: "/admin", label: "Overview" }];
+const links = [
+  { href: "/admin", label: "Overview", exact: true },
+  { href: "/admin/courses", label: "Courses", exact: false },
+];
 
 export function AdminSidebar() {
   return (
@@ -9,12 +12,12 @@ export function AdminSidebar() {
         Admin
       </p>
       {links.map((link) => (
-        <NavLink key={link.href} href={link.href}>
+        <NavLink key={link.href} href={link.href} exact={link.exact}>
           {link.label}
         </NavLink>
       ))}
-      {/* Manage Courses, Manage Users, and Payments sections will be added
-          alongside their respective business logic. */}
+      {/* Manage Users and Payments sections will be added alongside their
+          respective business logic. */}
     </aside>
   );
 }

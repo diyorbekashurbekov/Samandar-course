@@ -1,11 +1,17 @@
-const stats = [
-  { label: "Total students", value: "1,240" },
-  { label: "Active courses", value: "12" },
-  { label: "Revenue (this month)", value: "2,450,000 тг" },
-  { label: "Pending Kaspi payments", value: "0" },
-];
+import Link from "next/link";
+import { mockCourses } from "@/lib/mock-data";
 
 export default function AdminOverviewPage() {
+  const publishedCount = mockCourses.filter((course) => course.status === "PUBLISHED").length;
+  const draftCount = mockCourses.length - publishedCount;
+
+  const stats = [
+    { label: "Total courses", value: String(mockCourses.length) },
+    { label: "Published", value: String(publishedCount) },
+    { label: "Drafts", value: String(draftCount) },
+    { label: "Pending Kaspi payments", value: "0" },
+  ];
+
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-8">
       <div className="flex flex-col gap-1">
@@ -31,9 +37,25 @@ export default function AdminOverviewPage() {
         ))}
       </div>
 
+      <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">Courses</h2>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              Create and edit courses, manage lessons, and control publish status.
+            </p>
+          </div>
+          <Link
+            href="/admin/courses"
+            className="flex h-10 items-center justify-center rounded-full bg-brand px-5 text-sm font-medium text-white transition hover:bg-brand/90"
+          >
+            Manage courses
+          </Link>
+        </div>
+      </div>
+
       <div className="rounded-2xl border border-dashed border-zinc-300 p-10 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-        Course management, user management, and Kaspi payment reconciliation tools will live
-        here.
+        User management and Kaspi payment reconciliation tools will live here.
       </div>
     </div>
   );

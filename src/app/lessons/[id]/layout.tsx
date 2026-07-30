@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { LessonSidebar } from "@/components/lesson/lesson-sidebar";
-import { getLessonById, getLessonsForCourse } from "@/lib/mock-data";
+import { getCourseById, getLessonById, getLessonsForCourse } from "@/lib/mock-data";
 
 export default async function LessonLayout({
   children,
@@ -16,11 +16,17 @@ export default async function LessonLayout({
     notFound();
   }
 
-  const lessons = getLessonsForCourse(lesson.courseSlug);
+  const course = getCourseById(lesson.courseId);
+
+  if (!course) {
+    notFound();
+  }
+
+  const lessons = getLessonsForCourse(course.id);
 
   return (
     <div className="flex min-h-screen">
-      <LessonSidebar courseSlug={lesson.courseSlug} lessons={lessons} activeLessonId={id} />
+      <LessonSidebar courseSlug={course.slug} lessons={lessons} activeLessonId={id} />
       <main className="flex-1 bg-zinc-50 p-6 dark:bg-zinc-950">{children}</main>
     </div>
   );

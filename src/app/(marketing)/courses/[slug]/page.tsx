@@ -15,7 +15,7 @@ export default async function CourseDetailPage({
     notFound();
   }
 
-  const lessons = getLessonsForCourse(slug);
+  const lessons = getLessonsForCourse(course.id);
 
   return (
     <div className="mx-auto grid max-w-6xl gap-10 px-6 py-16 lg:grid-cols-[1fr_320px]">
