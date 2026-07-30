@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { VideoPlayer } from "@/components/lesson/video-player";
 import { LessonTabs } from "@/components/lesson/lesson-tabs";
-import { getLessonById } from "@/lib/mock-data";
+import { getLessonById } from "@/lib/data/lessons";
 
 export default async function LessonPage({
   params,
@@ -10,7 +10,7 @@ export default async function LessonPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const lesson = getLessonById(id);
+  const lesson = await getLessonById(id);
 
   if (!lesson) {
     notFound();
@@ -21,10 +21,10 @@ export default async function LessonPage({
       <div className="mx-auto flex max-w-3xl flex-col items-center gap-3 py-24 text-center">
         <Badge variant="locked">Locked</Badge>
         <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-          Complete previous lessons to unlock this one
+          Enroll in this course to unlock this lesson
         </h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Lesson locking will be enforced by enrollment/progress rules once implemented.
+          This lesson isn&apos;t a free preview, and enrollment/payment isn&apos;t implemented yet.
         </p>
       </div>
     );

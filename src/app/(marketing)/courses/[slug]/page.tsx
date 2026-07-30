@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { EnrollButton } from "@/components/course/enroll-button";
-import { getCourseBySlug, getLessonsForCourse } from "@/lib/mock-data";
+import { getCourseBySlug } from "@/lib/data/courses";
+import { listLessonsForCourse } from "@/lib/data/lessons";
 
 export default async function CourseDetailPage({
   params,
@@ -9,13 +10,13 @@ export default async function CourseDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const course = getCourseBySlug(slug);
+  const course = await getCourseBySlug(slug);
 
   if (!course) {
     notFound();
   }
 
-  const lessons = getLessonsForCourse(course.id);
+  const lessons = await listLessonsForCourse(course.id);
 
   return (
     <div className="mx-auto grid max-w-6xl gap-10 px-6 py-16 lg:grid-cols-[1fr_320px]">

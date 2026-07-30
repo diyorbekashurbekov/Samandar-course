@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ProgressBar } from "@/components/progress/progress-bar";
-import type { MockCourse } from "@/lib/mock-data";
+import type { CourseSummary } from "@/lib/types";
 
-export function CourseCard({ course }: { course: MockCourse }) {
+export function CourseCard({ course }: { course: CourseSummary }) {
   return (
     <Link
       href={`/courses/${course.slug}`}

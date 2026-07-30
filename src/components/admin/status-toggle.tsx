@@ -1,6 +1,6 @@
 "use client";
 
-import type { CourseStatus } from "@/lib/mock-data";
+import type { CourseStatus } from "@/lib/types";
 
 const statuses: CourseStatus[] = ["DRAFT", "PUBLISHED"];
 

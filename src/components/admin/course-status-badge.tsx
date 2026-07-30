@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import type { CourseStatus } from "@/lib/mock-data";
+import type { CourseStatus } from "@/lib/types";
 
 export function CourseStatusBadge({ status }: { status: CourseStatus }) {
   return (

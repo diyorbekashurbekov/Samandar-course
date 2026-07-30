@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LessonReorderList } from "@/components/admin/lesson-reorder-list";
-import { getCourseById, getLessonsForCourse } from "@/lib/mock-data";
+import { getCourseById } from "@/lib/data/courses";
+import { listLessonsForCourse } from "@/lib/data/lessons";
 
 export default async function CourseLessonsPage({
   params,
@@ -9,13 +10,13 @@ export default async function CourseLessonsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const course = getCourseById(id);
+  const course = await getCourseById(id);
 
   if (!course) {
     notFound();
   }
 
-  const lessons = getLessonsForCourse(course.id);
+  const lessons = await listLessonsForCourse(course.id);
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">

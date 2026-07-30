@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { LessonType } from "@/lib/mock-data";
+import type { LessonType } from "@/lib/types";
 
 const tabs = ["Overview", "Test", "Resources"] as const;
 

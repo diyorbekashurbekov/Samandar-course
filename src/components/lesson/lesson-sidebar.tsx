@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import type { MockLesson } from "@/lib/mock-data";
+import type { LessonSummary } from "@/lib/types";
 
 export function LessonSidebar({
   courseSlug,
@@ -8,7 +8,7 @@ export function LessonSidebar({
   activeLessonId,
 }: {
   courseSlug: string;
-  lessons: MockLesson[];
+  lessons: LessonSummary[];
   activeLessonId: string;
 }) {
   return (

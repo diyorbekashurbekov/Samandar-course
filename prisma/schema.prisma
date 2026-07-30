@@ -71,14 +71,33 @@ model User {
   enrollments Enrollment[]
 }
 
+enum CourseLevel {
+  Beginner
+  Intermediate
+  Advanced
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum LessonType {
+  video
+  test
+}
+
 model Course {
-  id          String   @id @default(cuid())
-  title       String
-  slug        String   @unique
-  description String?  @db.Text
-  published   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String       @id @default(cuid())
+  title        String
+  slug         String       @unique
+  description  String?      @db.Text
+  level        CourseLevel  @default(Beginner)
+  status       CourseStatus @default(DRAFT)
+  priceKzt     Int          @default(0)
+  thumbnailUrl String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   instructorId String
   instructor   User   @relation("InstructorCourses", fields: [instructorId], references: [id], onDelete: Cascade)
@@ -88,13 +107,16 @@ model Course {
 }
 
 model Lesson {
-  id        String   @id @default(cuid())
-  title     String
-  content   String?  @db.Text
-  videoUrl  String?
-  order     Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String     @id @default(cuid())
+  title           String
+  content         String?    @db.Text
+  videoUrl        String?
+  type            LessonType @default(video)
+  durationMinutes Int        @default(0)
+  isFreePreview   Boolean    @default(false)
+  order           Int
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)

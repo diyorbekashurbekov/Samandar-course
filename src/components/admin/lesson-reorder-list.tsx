@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { DeleteButton } from "@/components/admin/delete-button";
-import type { MockLesson } from "@/lib/mock-data";
+import { deleteLesson } from "@/lib/actions/lessons";
+import type { LessonSummary } from "@/lib/types";
 
-// Reordering is local to this session (no persistence) — once a Prisma
-// action exists, move() should call it with the new order and let the
-// server response drive state instead of the local array below.
-export function LessonReorderList({ lessons: initialLessons }: { lessons: MockLesson[] }) {
+// Reordering is local to this session (no persistence) — deleting a lesson
+// refreshes the page, which re-fetches the canonical order from Prisma.
+export function LessonReorderList({ lessons: initialLessons }: { lessons: LessonSummary[] }) {
   const [lessons, setLessons] = useState(initialLessons);
 
   function move(index: number, direction: -1 | 1) {
@@ -76,7 +76,12 @@ export function LessonReorderList({ lessons: initialLessons }: { lessons: MockLe
             >
               Edit
             </Link>
-            <DeleteButton itemName={lesson.title} itemType="lesson" size="sm" />
+            <DeleteButton
+              itemName={lesson.title}
+              itemType="lesson"
+              size="sm"
+              onConfirm={deleteLesson.bind(null, lesson.id)}
+            />
           </div>
         </div>
       ))}

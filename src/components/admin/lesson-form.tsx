@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { FormField, fieldInputClass } from "@/components/admin/form-field";
 import { Switch } from "@/components/ui/switch";
-import type { LessonType } from "@/lib/mock-data";
+import type { LessonType } from "@/lib/types";
+import type { CreateLessonResult, MutationResult } from "@/lib/actions/lessons";
 
 export type LessonFormValues = {
   title: string;
@@ -15,26 +18,41 @@ export type LessonFormValues = {
 
 export function LessonForm({
   mode,
+  courseId,
   defaultValues,
   onSubmit,
 }: {
   mode: "create" | "edit";
+  /** Required for "create" mode so the form can redirect back to this course's lesson list. */
+  courseId?: string;
   defaultValues?: Partial<LessonFormValues>;
-  /** Wire up a Prisma server action here once lesson mutations are implemented. */
-  onSubmit?: (values: LessonFormValues) => void | Promise<void>;
+  onSubmit: (values: LessonFormValues) => Promise<CreateLessonResult | MutationResult>;
 }) {
+  const router = useRouter();
   const [title, setTitle] = useState(defaultValues?.title ?? "");
   const [videoUrl, setVideoUrl] = useState(defaultValues?.videoUrl ?? "");
   const [durationMinutes, setDurationMinutes] = useState(defaultValues?.durationMinutes ?? 10);
   const [type, setType] = useState<LessonType>(defaultValues?.type ?? "video");
   const [isFreePreview, setIsFreePreview] = useState(defaultValues?.isFreePreview ?? false);
-  const [justSaved, setJustSaved] = useState(false);
+  const [pending, setPending] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setJustSaved(false);
-    await onSubmit?.({ title, videoUrl, durationMinutes, type, isFreePreview });
-    setJustSaved(true);
+    setPending(true);
+    const result = await onSubmit({ title, videoUrl, durationMinutes, type, isFreePreview });
+    setPending(false);
+
+    if (!result.success) {
+      toast.error(result.error);
+      return;
+    }
+
+    toast.success(mode === "create" ? "Lesson created" : "Lesson updated");
+    if (mode === "create" && courseId) {
+      router.push(`/admin/courses/${courseId}/lessons`);
+    } else {
+      router.refresh();
+    }
   }
 
   return (
@@ -97,15 +115,11 @@ export function LessonForm({
       <div className="flex items-center gap-4 border-t border-zinc-200 pt-6 dark:border-zinc-800">
         <button
           type="submit"
-          className="flex h-11 items-center justify-center rounded-full bg-brand px-6 text-sm font-medium text-white transition hover:bg-brand/90"
+          disabled={pending}
+          className="flex h-11 items-center justify-center rounded-full bg-brand px-6 text-sm font-medium text-white transition hover:bg-brand/90 disabled:opacity-60"
         >
-          {mode === "create" ? "Create lesson" : "Save changes"}
+          {pending ? "Saving..." : mode === "create" ? "Create lesson" : "Save changes"}
         </button>
-        {justSaved && (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Saved locally — connect a Prisma action to persist this.
-          </p>
-        )}
       </div>
     </form>
   );

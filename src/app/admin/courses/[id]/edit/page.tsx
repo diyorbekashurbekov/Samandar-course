@@ -2,11 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CourseForm } from "@/components/admin/course-form";
 import { DeleteButton } from "@/components/admin/delete-button";
-import { getCourseById } from "@/lib/mock-data";
+import { deleteCourse, updateCourse } from "@/lib/actions/courses";
+import { getCourseById } from "@/lib/data/courses";
 
 export default async function EditCoursePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const course = getCourseById(id);
+  const course = await getCourseById(id);
 
   if (!course) {
     notFound();
@@ -24,7 +25,12 @@ export default async function EditCoursePage({ params }: { params: Promise<{ id:
           </Link>
           <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Edit course</h1>
         </div>
-        <DeleteButton itemName={course.title} itemType="course" />
+        <DeleteButton
+          itemName={course.title}
+          itemType="course"
+          redirectTo="/admin/courses"
+          onConfirm={deleteCourse.bind(null, course.id)}
+        />
       </div>
 
       <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
@@ -39,6 +45,7 @@ export default async function EditCoursePage({ params }: { params: Promise<{ id:
             status: course.status,
             thumbnailUrl: course.thumbnailUrl,
           }}
+          onSubmit={updateCourse.bind(null, course.id)}
         />
       </div>
 

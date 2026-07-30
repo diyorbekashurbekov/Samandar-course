@@ -1,8 +1,8 @@
 import { CourseCard } from "@/components/course/course-card";
-import { mockCourses } from "@/lib/mock-data";
+import { listPublishedCourses } from "@/lib/data/courses";
 
-export default function CoursesPage() {
-  const publishedCourses = mockCourses.filter((course) => course.status === "PUBLISHED");
+export default async function CoursesPage() {
+  const publishedCourses = await listPublishedCourses();
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-16">

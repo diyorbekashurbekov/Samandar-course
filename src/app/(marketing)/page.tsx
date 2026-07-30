@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { CourseCard } from "@/components/course/course-card";
-import { mockCourses } from "@/lib/mock-data";
+import { listPublishedCourses } from "@/lib/data/courses";
 
-export default function HomePage() {
-  const featuredCourses = mockCourses
-    .filter((course) => course.status === "PUBLISHED")
-    .slice(0, 3);
+export default async function HomePage() {
+  const courses = await listPublishedCourses();
+  const featuredCourses = courses.slice(0, 3);
 
   return (
     <>

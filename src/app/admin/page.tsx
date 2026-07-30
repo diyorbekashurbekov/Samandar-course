@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { mockCourses } from "@/lib/mock-data";
+import { listAllCourses } from "@/lib/data/courses";
 
-export default function AdminOverviewPage() {
-  const publishedCount = mockCourses.filter((course) => course.status === "PUBLISHED").length;
-  const draftCount = mockCourses.length - publishedCount;
+export default async function AdminOverviewPage() {
+  const courses = await listAllCourses();
+  const publishedCount = courses.filter((course) => course.status === "PUBLISHED").length;
+  const draftCount = courses.length - publishedCount;
 
   const stats = [
-    { label: "Total courses", value: String(mockCourses.length) },
+    { label: "Total courses", value: String(courses.length) },
     { label: "Published", value: String(publishedCount) },
     { label: "Drafts", value: String(draftCount) },
     { label: "Pending Kaspi payments", value: "0" },

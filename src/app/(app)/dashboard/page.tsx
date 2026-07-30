@@ -1,10 +1,12 @@
 import { auth } from "@/auth";
 import { CourseCard } from "@/components/course/course-card";
-import { mockCourses } from "@/lib/mock-data";
+import { listEnrolledCoursesForUser } from "@/lib/data/courses";
 
 export default async function DashboardPage() {
   const session = await auth();
-  const enrolledCourses = mockCourses.filter((course) => typeof course.progress === "number");
+  const enrolledCourses = session?.user
+    ? await listEnrolledCoursesForUser(session.user.id)
+    : [];
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-10">
@@ -17,8 +19,9 @@ export default async function DashboardPage() {
 
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Enrolled courses" value={enrolledCourses.length} />
-        <StatCard label="Lessons completed" value={12} />
-        <StatCard label="Hours learned" value={6} />
+        {/* No lesson-completion tracking exists yet — these stay at 0 until that's built. */}
+        <StatCard label="Lessons completed" value={0} />
+        <StatCard label="Hours learned" value={0} />
       </div>
 
       <div className="flex flex-col gap-4">

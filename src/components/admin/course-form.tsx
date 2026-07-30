@@ -1,10 +1,13 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { FormField, fieldInputClass } from "@/components/admin/form-field";
 import { StatusToggle } from "@/components/admin/status-toggle";
 import { ThumbnailUpload } from "@/components/admin/thumbnail-upload";
-import type { CourseLevel, CourseStatus } from "@/lib/mock-data";
+import type { CourseLevel, CourseStatus } from "@/lib/types";
+import type { CreateCourseResult, MutationResult } from "@/lib/actions/courses";
 
 export type CourseFormValues = {
   title: string;
@@ -26,22 +29,34 @@ export function CourseForm({
 }: {
   mode: "create" | "edit";
   defaultValues?: CourseFormDefaultValues;
-  /** Wire up a Prisma server action here once course mutations are implemented. */
-  onSubmit?: (values: CourseFormValues) => void | Promise<void>;
+  onSubmit: (values: CourseFormValues) => Promise<CreateCourseResult | MutationResult>;
 }) {
+  const router = useRouter();
   const [title, setTitle] = useState(defaultValues?.title ?? "");
   const [slug, setSlug] = useState(defaultValues?.slug ?? "");
   const [description, setDescription] = useState(defaultValues?.description ?? "");
   const [level, setLevel] = useState<CourseLevel>(defaultValues?.level ?? "Beginner");
   const [priceKzt, setPriceKzt] = useState(defaultValues?.priceKzt ?? 0);
   const [status, setStatus] = useState<CourseStatus>(defaultValues?.status ?? "DRAFT");
-  const [justSaved, setJustSaved] = useState(false);
+  const [pending, setPending] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setJustSaved(false);
-    await onSubmit?.({ title, slug, description, level, priceKzt, status });
-    setJustSaved(true);
+    setPending(true);
+    const result = await onSubmit({ title, slug, description, level, priceKzt, status });
+    setPending(false);
+
+    if (!result.success) {
+      toast.error(result.error);
+      return;
+    }
+
+    toast.success(mode === "create" ? "Course created" : "Course updated");
+    if (mode === "create" && "courseId" in result) {
+      router.push(`/admin/courses/${result.courseId}/edit`);
+    } else {
+      router.refresh();
+    }
   }
 
   return (
@@ -114,15 +129,11 @@ export function CourseForm({
       <div className="flex items-center gap-4 border-t border-zinc-200 pt-6 dark:border-zinc-800">
         <button
           type="submit"
-          className="flex h-11 items-center justify-center rounded-full bg-brand px-6 text-sm font-medium text-white transition hover:bg-brand/90"
+          disabled={pending}
+          className="flex h-11 items-center justify-center rounded-full bg-brand px-6 text-sm font-medium text-white transition hover:bg-brand/90 disabled:opacity-60"
         >
-          {mode === "create" ? "Create course" : "Save changes"}
+          {pending ? "Saving..." : mode === "create" ? "Create course" : "Save changes"}
         </button>
-        {justSaved && (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Saved locally — connect a Prisma action to persist this.
-          </p>
-        )}
       </div>
     </form>
   );

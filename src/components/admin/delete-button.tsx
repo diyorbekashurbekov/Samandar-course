@@ -1,20 +1,42 @@
 "use client";
 
 import { useRef } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { ConfirmDialog, type ConfirmDialogHandle } from "@/components/ui/confirm-dialog";
+
+type DeleteResult = { success: true } | { success: false; error: string };
 
 export function DeleteButton({
   itemName,
   itemType,
   onConfirm,
+  redirectTo,
   size = "md",
 }: {
   itemName: string;
   itemType: string;
-  onConfirm?: () => void | Promise<void>;
+  onConfirm: () => Promise<DeleteResult>;
+  /** Navigate here after a successful delete; otherwise the current page is refreshed. */
+  redirectTo?: string;
   size?: "sm" | "md";
 }) {
   const dialogRef = useRef<ConfirmDialogHandle>(null);
+  const router = useRouter();
+
+  async function handleConfirm() {
+    const result = await onConfirm();
+    if (result.success) {
+      toast.success(`${itemType.charAt(0).toUpperCase()}${itemType.slice(1)} deleted`);
+      if (redirectTo) {
+        router.push(redirectTo);
+      } else {
+        router.refresh();
+      }
+    } else {
+      toast.error(result.error);
+    }
+  }
 
   return (
     <>
@@ -32,10 +54,7 @@ export function DeleteButton({
         title={`Delete this ${itemType}?`}
         description={`This will permanently delete "${itemName}". This action cannot be undone.`}
         confirmLabel="Delete"
-        onConfirm={async () => {
-          // TODO: call the Prisma delete action once mutations are implemented
-          await onConfirm?.();
-        }}
+        onConfirm={handleConfirm}
       />
     </>
   );

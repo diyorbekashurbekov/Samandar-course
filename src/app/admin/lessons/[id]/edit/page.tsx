@@ -2,17 +2,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LessonForm } from "@/components/admin/lesson-form";
 import { DeleteButton } from "@/components/admin/delete-button";
-import { getCourseById, getLessonById } from "@/lib/mock-data";
+import { deleteLesson, updateLesson } from "@/lib/actions/lessons";
+import { getCourseById } from "@/lib/data/courses";
+import { getLessonById } from "@/lib/data/lessons";
 
 export default async function EditLessonPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const lesson = getLessonById(id);
+  const lesson = await getLessonById(id);
 
   if (!lesson) {
     notFound();
   }
 
-  const course = getCourseById(lesson.courseId);
+  const course = await getCourseById(lesson.courseId);
   const lessonsHref = course ? `/admin/courses/${course.id}/lessons` : "/admin/courses";
 
   return (
@@ -30,7 +32,12 @@ export default async function EditLessonPage({ params }: { params: Promise<{ id:
             <p className="text-sm text-zinc-500 dark:text-zinc-400">For {course.title}</p>
           )}
         </div>
-        <DeleteButton itemName={lesson.title} itemType="lesson" />
+        <DeleteButton
+          itemName={lesson.title}
+          itemType="lesson"
+          redirectTo={lessonsHref}
+          onConfirm={deleteLesson.bind(null, lesson.id)}
+        />
       </div>
 
       <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
@@ -43,6 +50,7 @@ export default async function EditLessonPage({ params }: { params: Promise<{ id:
             type: lesson.type,
             isFreePreview: lesson.isFreePreview,
           }}
+          onSubmit={updateLesson.bind(null, lesson.id)}
         />
       </div>
     </div>

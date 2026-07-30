@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CourseForm } from "@/components/admin/course-form";
+import { createCourse } from "@/lib/actions/courses";
 
 export default function NewCoursePage() {
   return (
@@ -14,7 +15,7 @@ export default function NewCoursePage() {
         <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">New course</h1>
       </div>
       <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
-        <CourseForm mode="create" />
+        <CourseForm mode="create" onSubmit={createCourse} />
       </div>
     </div>
   );
