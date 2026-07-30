@@ -11,6 +11,13 @@ export default {
   },
   providers: [Credentials({ credentials: { email: {}, password: {} } })],
   callbacks: {
+    // Without this, `matcher` alone does not protect routes — Auth.js only
+    // redirects unauthenticated requests to `pages.signIn` when this
+    // callback exists and returns false. The matcher in proxy.ts already
+    // scopes which paths this runs on.
+    authorized({ auth }) {
+      return !!auth?.user;
+    },
     jwt({ token, user }) {
       if (user) {
         token.role = user.role;
