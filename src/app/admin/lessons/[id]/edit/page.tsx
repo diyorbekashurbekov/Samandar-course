@@ -75,6 +75,13 @@ export default async function EditLessonPage({ params }: { params: Promise<{ id:
           previewUrl={previewUrl}
         />
       </div>
+
+      <Link
+        href={`/admin/lessons/${lesson.id}/quiz`}
+        className="text-sm font-medium text-brand hover:underline"
+      >
+        Manage quiz →
+      </Link>
     </div>
   );
 }

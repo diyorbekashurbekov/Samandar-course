@@ -45,3 +45,51 @@ export type LessonSummary = {
   locked: boolean;
   completed: boolean;
 };
+
+// --- Quiz (admin shape includes isCorrect; student shape never does — see
+// src/lib/data/quizzes.ts, which doesn't even select isCorrect from the DB
+// for the student path) ---
+
+export type QuizAnswerAdmin = {
+  id: string;
+  text: string;
+  isCorrect: boolean;
+};
+
+export type QuizQuestionAdmin = {
+  id: string;
+  quizId: string;
+  text: string;
+  order: number;
+  answers: QuizAnswerAdmin[];
+};
+
+export type QuizAdmin = {
+  id: string;
+  lessonId: string;
+  title: string;
+  passingScore: number;
+  questions: QuizQuestionAdmin[];
+};
+
+export type QuizQuestionWithContext = QuizQuestionAdmin & { lessonId: string };
+
+export type QuizAnswerOption = {
+  id: string;
+  text: string;
+};
+
+export type QuizQuestionStudent = {
+  id: string;
+  text: string;
+  order: number;
+  answers: QuizAnswerOption[];
+};
+
+export type QuizStudent = {
+  id: string;
+  lessonId: string;
+  title: string;
+  passingScore: number;
+  questions: QuizQuestionStudent[];
+};

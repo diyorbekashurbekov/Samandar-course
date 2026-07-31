@@ -2,7 +2,9 @@ import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { VideoPlayer } from "@/components/lesson/video-player";
 import { LessonTabs } from "@/components/lesson/lesson-tabs";
+import { QuizPlayer } from "@/components/lesson/quiz-player";
 import { getLessonById } from "@/lib/data/lessons";
+import { getQuizForStudent } from "@/lib/data/quizzes";
 import { videoProvider } from "@/lib/video";
 
 export default async function LessonPage({
@@ -36,6 +38,9 @@ export default async function LessonPage({
       ? await videoProvider.getPlaybackUrl(lesson.videoPublicId)
       : null;
 
+  const quiz = await getQuizForStudent(id);
+  const hasQuiz = !!quiz && quiz.questions.length > 0;
+
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
       <div className="flex items-center gap-3">
@@ -55,6 +60,7 @@ export default async function LessonPage({
           </p>
         </div>
       )}
+      {hasQuiz && quiz && <QuizPlayer quiz={quiz} />}
       <LessonTabs lessonType={lesson.type} />
     </div>
   );

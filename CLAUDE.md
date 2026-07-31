@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-CourseHub — a course/learning-platform full-stack app built on Next.js (App Router), Prisma/PostgreSQL, and Auth.js (NextAuth v5). Auth, the course/lesson data model, an admin CMS (Prisma-backed CRUD for courses/lessons), and Cloudinary-backed lesson video upload/playback are built. Enrollment/payments, lesson progress tracking, and quizzes are not implemented yet.
+CourseHub — a course/learning-platform full-stack app built on Next.js (App Router), Prisma/PostgreSQL, and Auth.js (NextAuth v5). Auth, the course/lesson data model, an admin CMS (Prisma-backed CRUD for courses/lessons), Cloudinary-backed lesson video upload/playback, and a per-lesson quiz engine are built. Enrollment/payments, lesson unlocking, and progress/completion tracking are not implemented yet.
 
 ## Commands
 
@@ -103,6 +103,30 @@ is never generated or sent to the client. `locked` itself (in
 (`localStorage`, keyed by lesson id, in `VideoPlayer`) rather than a DB
 table — this is a player UX convenience, not the course-progress-tracking
 system, which isn't built yet.
+
+### Quiz engine
+
+`Quiz` is 1:1 with `Lesson` (`Quiz.lessonId @unique`); `Question` belongs to
+a `Quiz` (ordered like `Lesson` is, via `(quizId, order)` unique — reordering
+is local-only in the admin UI, same as `LessonReorderList`, not persisted);
+`Answer` belongs to a `Question`. "Exactly one correct answer" isn't a DB
+constraint — the admin `QuestionForm` uses a single `correctAnswerIndex`
+(radio selection over exactly 4 answer inputs), which makes "more than one
+correct" structurally unrepresentable rather than something to validate
+against. Editing a question replaces all 4 answers atomically
+(`prisma.$transaction`) instead of diffing the previous set.
+
+Correctness (`Answer.isCorrect`) must never reach the student before they
+submit: `src/lib/data/quizzes.ts` has two
+read paths — `getQuizForAdmin` (includes `isCorrect`) and `getQuizForStudent`
+(its Prisma `select` never fetches `isCorrect` at all, not just omits it
+after the fact). `submitQuiz` (`src/lib/actions/quizzes.ts`) is the only
+place scoring happens — it re-fetches the quiz with correct answers
+server-side and returns a scored result; nothing about correctness is ever
+sent to the client until after submission. Quiz attempts are **not**
+persisted (no attempt/submission table) — retaking is just local component
+state reset in `QuizPlayer`, on purpose, since progress/completion tracking
+isn't built yet.
 
 ### Agent-facing docs bundled by dependencies
 

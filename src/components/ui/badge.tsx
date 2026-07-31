@@ -5,6 +5,7 @@ const variants = {
   brand: "bg-brand/10 text-brand",
   success: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
   locked: "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
+  danger: "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300",
 };
 
 export function Badge({
