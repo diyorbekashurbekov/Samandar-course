@@ -27,6 +27,11 @@ function toLessonSummary(lesson: Lesson, locked: boolean): LessonSummary {
     type: lesson.type,
     durationMinutes: lesson.durationMinutes,
     videoUrl: lesson.videoUrl ?? "",
+    videoPublicId: lesson.videoPublicId,
+    videoDurationSeconds: lesson.videoDurationSeconds,
+    videoSizeBytes: lesson.videoSizeBytes === null ? null : Number(lesson.videoSizeBytes),
+    videoUploadedAt: lesson.videoUploadedAt,
+    videoUploadStatus: lesson.videoUploadStatus,
     isFreePreview: lesson.isFreePreview,
     // No lesson-completion tracking exists yet.
     locked,
@@ -35,18 +40,26 @@ function toLessonSummary(lesson: Lesson, locked: boolean): LessonSummary {
 }
 
 export async function listLessonsForCourse(courseId: string): Promise<LessonSummary[]> {
-  const [lessons, enrolled] = await Promise.all([
+  const [course, lessons, enrolled] = await Promise.all([
+    prisma.course.findUnique({ where: { id: courseId }, select: { status: true } }),
     prisma.lesson.findMany({ where: { courseId }, orderBy: { order: "asc" } }),
     isEnrolledInCourse(courseId),
   ]);
 
-  return lessons.map((lesson) => toLessonSummary(lesson, !lesson.isFreePreview && !enrolled));
+  const coursePublished = course?.status === "PUBLISHED";
+  return lessons.map((lesson) =>
+    toLessonSummary(lesson, !coursePublished || (!lesson.isFreePreview && !enrolled)),
+  );
 }
 
 export async function getLessonById(id: string): Promise<LessonSummary | null> {
-  const lesson = await prisma.lesson.findUnique({ where: { id } });
+  const lesson = await prisma.lesson.findUnique({
+    where: { id },
+    include: { course: { select: { status: true } } },
+  });
   if (!lesson) return null;
 
   const enrolled = await isEnrolledInCourse(lesson.courseId);
-  return toLessonSummary(lesson, !lesson.isFreePreview && !enrolled);
+  const coursePublished = lesson.course.status === "PUBLISHED";
+  return toLessonSummary(lesson, !coursePublished || (!lesson.isFreePreview && !enrolled));
 }

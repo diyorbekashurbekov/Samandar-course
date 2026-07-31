@@ -3,9 +3,14 @@
 // stay decoupled from Prisma's exact select/include shape so UI components
 // don't need to know how the data was fetched.
 
-import type { CourseLevel, CourseStatus, LessonType } from "@/generated/prisma/client";
+import type {
+  CourseLevel,
+  CourseStatus,
+  LessonType,
+  VideoUploadStatus,
+} from "@/generated/prisma/client";
 
-export type { CourseLevel, CourseStatus, LessonType };
+export type { CourseLevel, CourseStatus, LessonType, VideoUploadStatus };
 
 export type CourseSummary = {
   id: string;
@@ -31,6 +36,11 @@ export type LessonSummary = {
   type: LessonType;
   durationMinutes: number;
   videoUrl: string;
+  videoPublicId: string | null;
+  videoDurationSeconds: number | null;
+  videoSizeBytes: number | null;
+  videoUploadedAt: Date | null;
+  videoUploadStatus: VideoUploadStatus;
   isFreePreview: boolean;
   locked: boolean;
   completed: boolean;

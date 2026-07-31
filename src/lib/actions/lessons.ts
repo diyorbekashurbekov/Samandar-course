@@ -33,7 +33,6 @@ export async function createLesson(courseId: string, input: LessonFormInput): Pr
     data: {
       courseId,
       title: parsed.data.title,
-      videoUrl: parsed.data.videoUrl || null,
       durationMinutes: parsed.data.durationMinutes,
       type: parsed.data.type,
       isFreePreview: parsed.data.isFreePreview,
@@ -59,7 +58,6 @@ export async function updateLesson(id: string, input: LessonFormInput): Promise<
     where: { id },
     data: {
       title: parsed.data.title,
-      videoUrl: parsed.data.videoUrl || null,
       durationMinutes: parsed.data.durationMinutes,
       type: parsed.data.type,
       isFreePreview: parsed.data.isFreePreview,

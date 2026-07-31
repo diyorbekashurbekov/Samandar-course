@@ -10,7 +10,6 @@ import type { CreateLessonResult, MutationResult } from "@/lib/actions/lessons";
 
 export type LessonFormValues = {
   title: string;
-  videoUrl: string;
   durationMinutes: number;
   type: LessonType;
   isFreePreview: boolean;
@@ -30,7 +29,6 @@ export function LessonForm({
 }) {
   const router = useRouter();
   const [title, setTitle] = useState(defaultValues?.title ?? "");
-  const [videoUrl, setVideoUrl] = useState(defaultValues?.videoUrl ?? "");
   const [durationMinutes, setDurationMinutes] = useState(defaultValues?.durationMinutes ?? 10);
   const [type, setType] = useState<LessonType>(defaultValues?.type ?? "video");
   const [isFreePreview, setIsFreePreview] = useState(defaultValues?.isFreePreview ?? false);
@@ -39,7 +37,7 @@ export function LessonForm({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);
-    const result = await onSubmit({ title, videoUrl, durationMinutes, type, isFreePreview });
+    const result = await onSubmit({ title, durationMinutes, type, isFreePreview });
     setPending(false);
 
     if (!result.success) {
@@ -64,21 +62,6 @@ export function LessonForm({
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           required
-        />
-      </FormField>
-
-      <FormField
-        label="Video URL"
-        htmlFor="videoUrl"
-        hint="Paste a hosted video link (YouTube, Vimeo, or storage URL)."
-      >
-        <input
-          id="videoUrl"
-          type="url"
-          placeholder="https://"
-          className={fieldInputClass}
-          value={videoUrl}
-          onChange={(event) => setVideoUrl(event.target.value)}
         />
       </FormField>
 

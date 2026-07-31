@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-CourseHub — a course/learning-platform full-stack app built on Next.js (App Router), Prisma/PostgreSQL, and Auth.js (NextAuth v5). This is an early-stage scaffold: only auth plumbing and the data model exist so far, no course/lesson UI yet.
+CourseHub — a course/learning-platform full-stack app built on Next.js (App Router), Prisma/PostgreSQL, and Auth.js (NextAuth v5). Auth, the course/lesson data model, an admin CMS (Prisma-backed CRUD for courses/lessons), and Cloudinary-backed lesson video upload/playback are built. Enrollment/payments, lesson progress tracking, and quizzes are not implemented yet.
 
 ## Commands
 
@@ -32,6 +32,7 @@ There is no test runner configured yet.
 Copy `.env.example` to `.env` and fill in:
 - `DATABASE_URL` — PostgreSQL connection string
 - `AUTH_SECRET` — generate with `npx auth secret`
+- `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` — from the Cloudinary console, needed for lesson video upload/playback
 
 ## Architecture
 
@@ -72,6 +73,36 @@ This uses the Prisma 7 `prisma-client` generator (not the older `prisma-client-j
 ### Path alias
 
 `@/*` maps to `./src/*` (see `tsconfig.json`).
+
+### Lesson video (Cloudinary)
+
+Video storage sits behind an abstraction (`src/lib/video/`): `VideoProvider` in
+`types.ts` is the interface, `cloudinary.ts` is the only file that knows about
+Cloudinary, and `index.ts` exports the single active provider. Swapping
+providers means implementing the interface again and changing that one export.
+
+Upload is a **direct browser-to-Cloudinary upload**, not proxied through the
+Next.js server (required for files up to 2GB): the admin's `LessonVideoManager`
+gets a signed upload ticket from the `createVideoUploadTicket` Server Action,
+POSTs the file straight to Cloudinary via `XMLHttpRequest` (for real progress
+events), then calls `confirmVideoUpload` to persist the resulting metadata.
+Replacing a video uploads the new one and confirms it *before* best-effort
+deleting the old Cloudinary asset — a failed replace never loses the working
+video.
+
+Videos are uploaded with Cloudinary's `authenticated` delivery type, so the
+raw URL returned at upload time is unusable on its own. Playback always goes
+through `videoProvider.getPlaybackUrl(publicId)`, called fresh server-side on
+every page load — the student lesson page (`src/app/lessons/[id]/page.tsx`)
+only calls it when `lesson.locked` is false, so a locked lesson's signed URL
+is never generated or sent to the client. `locked` itself (in
+`src/lib/data/lessons.ts`) requires *both* the parent course being
+`PUBLISHED` *and* (free preview or enrolled) — don't drop either half.
+
+"Remember last watched position" is intentionally client-only
+(`localStorage`, keyed by lesson id, in `VideoPlayer`) rather than a DB
+table — this is a player UX convenience, not the course-progress-tracking
+system, which isn't built yet.
 
 ### Agent-facing docs bundled by dependencies
 

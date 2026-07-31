@@ -87,6 +87,13 @@ enum LessonType {
   test
 }
 
+enum VideoUploadStatus {
+  NONE
+  UPLOADING
+  READY
+  FAILED
+}
+
 model Course {
   id           String       @id @default(cuid())
   title        String
@@ -117,6 +124,16 @@ model Lesson {
   order           Int
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
+
+  // Cloudinary-backed video (see src/lib/video/). `videoUrl` above is the
+  // last-saved delivery URL; playback always re-signs it from
+  // `videoPublicId` via the video provider rather than trusting this value
+  // directly, since Cloudinary assets are uploaded as `authenticated`.
+  videoPublicId        String?
+  videoDurationSeconds Int?
+  videoSizeBytes       BigInt?
+  videoUploadedAt      DateTime?
+  videoUploadStatus    VideoUploadStatus @default(NONE)
 
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)

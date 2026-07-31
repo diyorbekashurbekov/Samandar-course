@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { VideoPlayer } from "@/components/lesson/video-player";
 import { LessonTabs } from "@/components/lesson/lesson-tabs";
 import { getLessonById } from "@/lib/data/lessons";
+import { videoProvider } from "@/lib/video";
 
 export default async function LessonPage({
   params,
@@ -30,6 +31,11 @@ export default async function LessonPage({
     );
   }
 
+  const videoSrc =
+    lesson.videoUploadStatus === "READY" && lesson.videoPublicId
+      ? await videoProvider.getPlaybackUrl(lesson.videoPublicId)
+      : null;
+
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
       <div className="flex items-center gap-3">
@@ -38,7 +44,17 @@ export default async function LessonPage({
         </h1>
         {lesson.completed && <Badge variant="success">Completed</Badge>}
       </div>
-      <VideoPlayer title={lesson.title} />
+      {videoSrc ? (
+        <VideoPlayer src={videoSrc} title={lesson.title} lessonId={lesson.id} />
+      ) : (
+        <div className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-2xl bg-zinc-900 text-center">
+          <span className="text-2xl">🎬</span>
+          <p className="text-sm font-medium text-zinc-200">Video coming soon</p>
+          <p className="text-xs text-zinc-500">
+            The instructor hasn&apos;t uploaded a video for this lesson yet.
+          </p>
+        </div>
+      )}
       <LessonTabs lessonType={lesson.type} />
     </div>
   );
