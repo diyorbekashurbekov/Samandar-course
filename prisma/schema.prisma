@@ -71,6 +71,7 @@ model User {
   enrollments    Enrollment[]
   lessonProgress LessonProgress[]
   courseProgress CourseProgress[]
+  payments       Payment[]
 }
 
 enum CourseLevel {
@@ -114,6 +115,7 @@ model Course {
   lessons     Lesson[]
   enrollments Enrollment[]
   progress    CourseProgress[]
+  payments    Payment[]
 }
 
 model Lesson {
@@ -178,6 +180,40 @@ model Enrollment {
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
+}
+
+enum TransactionStatus {
+  PENDING
+  PAID
+  FAILED
+  CANCELLED
+  EXPIRED
+}
+
+// One row per checkout attempt (src/lib/actions/payment.ts). This is the
+// payment layer's transaction record — it never duplicates Enrollment's own
+// status/paymentStatus fields, it's what *causes* Enrollment to transition.
+// The only point of contact with the Enrollment Engine is grantEnrollment
+// (src/lib/data/enrollment.ts), called once a Payment reaches PAID — see
+// the webhook handler at src/app/api/payments/kaspi/webhook/route.ts.
+model Payment {
+  id                String            @id @default(cuid())
+  userId            String
+  courseId          String
+  amountKzt         Int
+  status            TransactionStatus @default(PENDING)
+  provider          String            @default("kaspi")
+  // Kaspi's own order/payment id. Unique so a replayed or forged webhook
+  // can never get attributed to two different Payment rows.
+  providerReference String?           @unique
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  confirmedAt       DateTime?
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([userId, courseId])
 }
 
 model Quiz {

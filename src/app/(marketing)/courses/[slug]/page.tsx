@@ -6,6 +6,7 @@ import { getCourseBySlug } from "@/lib/data/courses";
 import { listLessonsForCourse } from "@/lib/data/lessons";
 import { isUserEnrolled } from "@/lib/data/enrollment";
 import { loadStudentProgress } from "@/lib/data/progress";
+import { getLatestPaymentForCourse } from "@/lib/data/payment";
 
 export default async function CourseDetailPage({
   params,
@@ -19,16 +20,18 @@ export default async function CourseDetailPage({
     notFound();
   }
 
-  const [lessons, enrolled, session] = await Promise.all([
+  const [lessons, enrolled, session, latestPayment] = await Promise.all([
     listLessonsForCourse(course.id),
     isUserEnrolled(course.id),
     auth(),
+    getLatestPaymentForCourse(course.id),
   ]);
 
   const continueLessonId =
     enrolled && session?.user
       ? (await loadStudentProgress(course.id, session.user.id)).currentLessonId
       : null;
+  const pendingPaymentId = latestPayment?.status === "PENDING" ? latestPayment.id : null;
 
   return (
     <div className="mx-auto grid max-w-6xl gap-10 px-6 py-16 lg:grid-cols-[1fr_320px]">
@@ -84,6 +87,7 @@ export default async function CourseDetailPage({
           priceKzt={course.priceKzt}
           enrolled={enrolled}
           continueLessonId={continueLessonId}
+          pendingPaymentId={pendingPaymentId}
         />
       </aside>
     </div>

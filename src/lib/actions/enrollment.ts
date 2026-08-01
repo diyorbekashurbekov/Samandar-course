@@ -2,19 +2,25 @@
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { grantEnrollment, type GrantEnrollmentResult } from "@/lib/data/enrollment";
 import { createEnrollmentSchema, courseIdSchema } from "@/lib/validations/enrollment";
 
-export type CreateEnrollmentResult =
-  | { success: true; enrollmentId: string }
-  | { success: false; error: string };
+export type CreateEnrollmentResult = GrantEnrollmentResult;
 export type MutationResult = { success: true } | { success: false; error: string };
 
-// The only entry point that grants course access. A payment provider (Kaspi,
-// Stripe, ...) confirms payment on its own, then calls this with its name
-// and a reference — it never decides who gets access, this does. Upserts
-// rather than plain-creates so re-enrolling after a cancellation reactivates
-// the existing row instead of hitting the (userId, courseId) unique
-// constraint.
+// grantEnrollment (src/lib/data/enrollment.ts) — the plain function that
+// actually does the enrolling — is deliberately NOT defined in this file: a
+// file-level "use server" directive turns every export here into a
+// client-callable Server Action, so the function with no auth check of its
+// own must live somewhere that directive doesn't reach.
+
+// Client-facing entry point for free/manual enrollment (a session is
+// required). A payment provider (Kaspi, ...) does NOT call this — it can't
+// authenticate as the buyer from a server-to-server webhook — it calls
+// grantEnrollment directly once its own payment verification has succeeded
+// (see src/app/api/payments/kaspi/webhook/route.ts). Both paths converge on
+// the same grantEnrollment logic, so there's still exactly one place that
+// decides what "enrolled" means.
 export async function createEnrollment(
   courseId: string,
   options?: { paymentProvider?: string; paymentReference?: string | null },
@@ -33,33 +39,10 @@ export async function createEnrollment(
     return { success: false, error: parsed.error.issues[0]?.message ?? "Invalid input." };
   }
 
-  const course = await prisma.course.findUnique({
-    where: { id: parsed.data.courseId },
-    select: { id: true },
+  return grantEnrollment(session.user.id, parsed.data.courseId, {
+    paymentProvider: parsed.data.paymentProvider,
+    paymentReference: parsed.data.paymentReference,
   });
-  if (!course) {
-    return { success: false, error: "Course not found." };
-  }
-
-  const enrollment = await prisma.enrollment.upsert({
-    where: { userId_courseId: { userId: session.user.id, courseId: parsed.data.courseId } },
-    create: {
-      userId: session.user.id,
-      courseId: parsed.data.courseId,
-      status: "ACTIVE",
-      paymentStatus: "PAID",
-      paymentProvider: parsed.data.paymentProvider,
-      paymentReference: parsed.data.paymentReference ?? null,
-    },
-    update: {
-      status: "ACTIVE",
-      paymentStatus: "PAID",
-      paymentProvider: parsed.data.paymentProvider,
-      paymentReference: parsed.data.paymentReference ?? null,
-    },
-  });
-
-  return { success: true, enrollmentId: enrollment.id };
 }
 
 export async function cancelEnrollment(courseId: string): Promise<MutationResult> {
