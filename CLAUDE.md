@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-CourseHub — a course/learning-platform full-stack app built on Next.js (App Router), Prisma/PostgreSQL, and Auth.js (NextAuth v5). Auth, the course/lesson data model, an admin CMS (Prisma-backed CRUD for courses/lessons), Cloudinary-backed lesson video upload/playback, and a per-lesson quiz engine are built. Enrollment/payments, lesson unlocking, and progress/completion tracking are not implemented yet.
+CourseHub — a course/learning-platform full-stack app built on Next.js (App Router), Prisma/PostgreSQL, and Auth.js (NextAuth v5). Auth, the course/lesson data model, an admin CMS (Prisma-backed CRUD for courses/lessons), Cloudinary-backed lesson video upload/playback, a per-lesson quiz engine, and sequential lesson unlocking with progress tracking are built. Enrollment/payments and certificates are not implemented yet (enrollment rows still have to be seeded directly — there's no sign-up/checkout flow).
 
 ## Commands
 
@@ -101,8 +101,8 @@ is never generated or sent to the client. `locked` itself (in
 
 "Remember last watched position" is intentionally client-only
 (`localStorage`, keyed by lesson id, in `VideoPlayer`) rather than a DB
-table — this is a player UX convenience, not the course-progress-tracking
-system, which isn't built yet.
+table — this is a player UX convenience, separate from the real
+lesson-completion progress tracked in `LessonProgress` (see below).
 
 ### Quiz engine
 
@@ -123,10 +123,42 @@ read paths — `getQuizForAdmin` (includes `isCorrect`) and `getQuizForStudent`
 after the fact). `submitQuiz` (`src/lib/actions/quizzes.ts`) is the only
 place scoring happens — it re-fetches the quiz with correct answers
 server-side and returns a scored result; nothing about correctness is ever
-sent to the client until after submission. Quiz attempts are **not**
-persisted (no attempt/submission table) — retaking is just local component
-state reset in `QuizPlayer`, on purpose, since progress/completion tracking
-isn't built yet.
+sent to the client until after submission. `submitQuiz` itself is
+unchanged by the progress-tracking system below — `submitQuizResult`
+(`src/lib/actions/progress.ts`) wraps it rather than modifying it.
+
+### Lesson unlocking & progress tracking
+
+Two models, both per-student: `LessonProgress` (per user+lesson —
+`completed`/`score`/`percentage`/`attempts`/`completedAt`) is the source of
+truth; `CourseProgress` (per user+course — `currentLessonId`,
+`lastActivityAt`) is a denormalized, advance-only *cache* of "the furthest
+lesson reached," recomputed from `LessonProgress` by `unlockNextLesson` —
+never trust `currentLessonId` as authoritative over what `LessonProgress`
+says is actually completed.
+
+**Unlock rule** (`computeUnlockedOrder` in `src/lib/data/progress.ts`, shared
+by the cached `getUnlockedLessonOrder` and `loadStudentProgress`): walk
+lessons in `order`; a lesson only blocks progress past it if it has a quiz
+that hasn't been passed — a lesson with no quiz never gates. A lesson is
+accessible if it's a free preview, already completed, or `order <=` that
+walk's result; combined with the pre-existing enrollment/course-published
+checks in `src/lib/data/lessons.ts`'s `locked` computation (don't drop
+either half when touching that logic).
+
+**Scoring persistence** (`markLessonCompleted`): retries are unlimited and
+never revoked — once `completed` is true it stays true regardless of a later
+failed retry, and `score`/`percentage` always keep the highest value ever
+achieved (a lower retry is silently discarded, not overwritten).
+`completedAt` is set once, on first pass, and never updated after.
+
+**Wiring**: `QuizPlayer` calls `submitQuizResult`, not `submitQuiz` directly
+— it resolves `lessonId`/`courseId` from `quizId` internally so its public
+signature matches `submitQuiz` exactly, then calls `markLessonCompleted` +
+`unlockNextLesson` before returning the same scored result. It also calls
+`router.refresh()` after submitting so the curriculum sidebar (a Server
+Component) reflects newly-unlocked lessons immediately, without discarding
+the quiz result screen's local client state.
 
 ### Agent-facing docs bundled by dependencies
 

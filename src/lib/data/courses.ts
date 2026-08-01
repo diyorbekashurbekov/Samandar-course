@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { loadStudentProgress } from "@/lib/data/progress";
 import type { CourseSummary } from "@/lib/types";
 import type { Prisma } from "@/generated/prisma/client";
 
@@ -51,8 +52,13 @@ export async function listEnrolledCoursesForUser(userId: string): Promise<Course
     orderBy: { enrolledAt: "desc" },
     include: { course: courseWithCounts },
   });
-  // No lesson-progress tracking exists yet, so enrolled courses simply start at 0%.
-  return enrollments.map((enrollment) => toCourseSummary(enrollment.course, 0));
+
+  return Promise.all(
+    enrollments.map(async (enrollment) => {
+      const progress = await loadStudentProgress(enrollment.courseId, userId);
+      return toCourseSummary(enrollment.course, progress.progressPercent);
+    }),
+  );
 }
 
 export async function getCourseBySlug(slug: string): Promise<CourseSummary | null> {

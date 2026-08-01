@@ -52,7 +52,13 @@ export default async function CourseDetailPage({
                 </div>
                 <div className="flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
                   <span>{lesson.durationMinutes} min</span>
-                  {lesson.locked && <Badge variant="locked">Locked</Badge>}
+                  {lesson.locked ? (
+                    <Badge variant="locked">🔒 Locked</Badge>
+                  ) : lesson.completed ? (
+                    <Badge variant="success">✅ Completed</Badge>
+                  ) : lesson.isCurrent ? (
+                    <Badge variant="brand">▶ Current</Badge>
+                  ) : null}
                 </div>
               </li>
             ))}

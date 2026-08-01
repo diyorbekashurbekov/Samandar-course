@@ -65,10 +65,12 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts    Account[]
-  sessions    Session[]
-  courses     Course[]     @relation("InstructorCourses")
-  enrollments Enrollment[]
+  accounts       Account[]
+  sessions       Session[]
+  courses        Course[]         @relation("InstructorCourses")
+  enrollments    Enrollment[]
+  lessonProgress LessonProgress[]
+  courseProgress CourseProgress[]
 }
 
 enum CourseLevel {
@@ -111,6 +113,7 @@ model Course {
 
   lessons     Lesson[]
   enrollments Enrollment[]
+  progress    CourseProgress[]
 }
 
 model Lesson {
@@ -138,7 +141,10 @@ model Lesson {
   courseId String
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
-  quiz Quiz?
+  quiz     Quiz?
+  progress LessonProgress[]
+  // Reverse of CourseProgress.currentLessonId — courses currently "parked" on this lesson.
+  currentForCourseProgress CourseProgress[]
 
   @@unique([courseId, order])
 }
@@ -186,4 +192,47 @@ model Answer {
   isCorrect  Boolean @default(false)
 
   question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+// Per (user, lesson) record of quiz completion. Written only from
+// markLessonCompleted (src/lib/actions/progress.ts) after a quiz submission
+// — never revoked once completed=true, and score/percentage always keep the
+// highest value ever achieved, even across failed retries.
+model LessonProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  lessonId    String
+  completed   Boolean   @default(false)
+  score       Int?
+  percentage  Int?
+  attempts    Int       @default(0)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+}
+
+// Per (user, course) cache of "the furthest lesson reached." This is a
+// denormalized, advance-only pointer recomputed from LessonProgress by
+// unlockNextLesson — the source of truth for *whether* a lesson is passed
+// is always LessonProgress; this just avoids re-walking every lesson on
+// every page load.
+model CourseProgress {
+  id              String   @id @default(cuid())
+  userId          String
+  courseId        String
+  currentLessonId String?
+  lastActivityAt  DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course        Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  currentLesson Lesson? @relation(fields: [currentLessonId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, courseId])
 }

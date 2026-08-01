@@ -44,6 +44,10 @@ export type LessonSummary = {
   isFreePreview: boolean;
   locked: boolean;
   completed: boolean;
+  /** The furthest lesson reached but not yet completed — see src/lib/data/progress.ts. */
+  isCurrent: boolean;
+  /** Whether the viewer is enrolled in this lesson's course (distinct from `locked`, which also factors in sequential progress). */
+  enrolled: boolean;
 };
 
 // --- Quiz (admin shape includes isCorrect; student shape never does — see

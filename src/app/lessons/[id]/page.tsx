@@ -24,10 +24,12 @@ export default async function LessonPage({
       <div className="mx-auto flex max-w-3xl flex-col items-center gap-3 py-24 text-center">
         <Badge variant="locked">Locked</Badge>
         <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-          Enroll in this course to unlock this lesson
+          {lesson.enrolled ? "Complete the previous lesson to unlock this one" : "Enroll in this course to unlock this lesson"}
         </h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          This lesson isn&apos;t a free preview, and enrollment/payment isn&apos;t implemented yet.
+          {lesson.enrolled
+            ? "Pass the previous lesson's quiz (if it has one) to move forward."
+            : "This lesson isn't a free preview, and enrollment/payment isn't implemented yet."}
         </p>
       </div>
     );

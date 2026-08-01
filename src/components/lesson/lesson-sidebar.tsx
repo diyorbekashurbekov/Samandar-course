@@ -41,9 +41,11 @@ export function LessonSidebar({
               {lesson.title}
             </span>
             {lesson.locked ? (
-              <Badge variant="locked">Locked</Badge>
+              <Badge variant="locked">🔒 Locked</Badge>
             ) : lesson.completed ? (
-              <Badge variant="success">Done</Badge>
+              <Badge variant="success">✅ Done</Badge>
+            ) : lesson.isCurrent ? (
+              <Badge variant="brand">▶ Current</Badge>
             ) : null}
           </Link>
         );

@@ -1,16 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ProgressBar } from "@/components/progress/progress-bar";
 import { Badge } from "@/components/ui/badge";
-import { submitQuiz, type QuizSubmissionResult } from "@/lib/actions/quizzes";
+import { submitQuizResult } from "@/lib/actions/progress";
+import type { QuizSubmissionResult } from "@/lib/actions/quizzes";
 import type { QuizStudent } from "@/lib/types";
 
 type Phase = "answering" | "review" | "result";
 type SuccessResult = Extract<QuizSubmissionResult, { success: true }>;
 
 export function QuizPlayer({ quiz }: { quiz: QuizStudent }) {
+  const router = useRouter();
   const [phase, setPhase] = useState<Phase>("answering");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selected, setSelected] = useState<Record<string, string>>({});
@@ -33,7 +36,7 @@ export function QuizPlayer({ quiz }: { quiz: QuizStudent }) {
 
   async function handleSubmit() {
     setSubmitting(true);
-    const response = await submitQuiz(quiz.id, { answers: selected });
+    const response = await submitQuizResult(quiz.id, { answers: selected });
     setSubmitting(false);
 
     if (!response.success) {
@@ -43,6 +46,10 @@ export function QuizPlayer({ quiz }: { quiz: QuizStudent }) {
 
     setResult(response);
     setPhase("result");
+    // Refreshes server-rendered data (the curriculum sidebar, lesson lock
+    // state) in the background without discarding this component's local
+    // result view.
+    router.refresh();
   }
 
   function handleRetake() {
