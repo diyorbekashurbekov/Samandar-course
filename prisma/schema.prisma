@@ -149,11 +149,30 @@ model Lesson {
   @@unique([courseId, order])
 }
 
+enum EnrollmentStatus {
+  ACTIVE
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+// The business layer every payment provider (Kaspi, Stripe, ...) plugs into:
+// a provider confirms payment on its own, then calls createEnrollment
+// (src/lib/actions/enrollment.ts) — this model and its access rules don't
+// change per provider, only paymentProvider/paymentReference do.
 model Enrollment {
-  id         String   @id @default(cuid())
-  userId     String
-  courseId   String
-  enrolledAt DateTime @default(now())
+  id               String           @id @default(cuid())
+  userId           String
+  courseId         String
+  enrolledAt       DateTime         @default(now())
+  status           EnrollmentStatus @default(ACTIVE)
+  paymentStatus    PaymentStatus    @default(PENDING)
+  paymentProvider  String           @default("manual")
+  paymentReference String?
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)

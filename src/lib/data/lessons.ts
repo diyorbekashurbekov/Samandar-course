@@ -1,23 +1,9 @@
-import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { getUnlockedLessonOrder, getLessonProgressForUser } from "@/lib/data/progress";
+import { isUserEnrolled } from "@/lib/data/enrollment";
 import type { LessonSummary } from "@/lib/types";
 import type { Lesson } from "@/generated/prisma/client";
-
-// Memoized per-request so layout.tsx and page.tsx can both check enrollment
-// for the same course without issuing duplicate queries.
-export const isEnrolledInCourse = cache(async (courseId: string): Promise<boolean> => {
-  const session = await auth();
-  if (!session?.user) return false;
-
-  const enrollment = await prisma.enrollment.findUnique({
-    where: { userId_courseId: { userId: session.user.id, courseId } },
-    select: { id: true },
-  });
-
-  return !!enrollment;
-});
 
 function toLessonSummary(
   lesson: Lesson,
@@ -51,7 +37,7 @@ export async function listLessonsForCourse(courseId: string): Promise<LessonSumm
   const [course, lessons, enrolled] = await Promise.all([
     prisma.course.findUnique({ where: { id: courseId }, select: { status: true } }),
     prisma.lesson.findMany({ where: { courseId }, orderBy: { order: "asc" } }),
-    isEnrolledInCourse(courseId),
+    isUserEnrolled(courseId),
   ]);
 
   const coursePublished = course?.status === "PUBLISHED";
@@ -85,7 +71,7 @@ export async function getLessonById(id: string): Promise<LessonSummary | null> {
   });
   if (!lesson) return null;
 
-  const enrolled = await isEnrolledInCourse(lesson.courseId);
+  const enrolled = await isUserEnrolled(lesson.courseId);
   const coursePublished = lesson.course.status === "PUBLISHED";
 
   const session = await auth();

@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { getUnlockedLessonOrder } from "@/lib/data/progress";
+import { getLessonById } from "@/lib/data/lessons";
 import { submitQuiz, type QuizSubmissionResult } from "@/lib/actions/quizzes";
 import type { SubmitQuizInput } from "@/lib/validations/quiz-submission";
 
@@ -95,6 +96,12 @@ export async function unlockNextLesson(courseId: string): Promise<UnlockResult> 
 // result. lessonId/courseId are resolved from quizId internally so the
 // public signature matches submitQuiz exactly and QuizPlayer only needs to
 // change which action it calls, not what it passes.
+//
+// submitQuiz itself has no notion of enrollment, so this is also the
+// enforcement point for "quizzes inaccessible without enrollment": it
+// re-derives the same `locked` state the lesson page used to decide
+// whether to render the quiz at all (src/lib/data/lessons.ts), rejecting a
+// direct action call for a lesson the caller can't actually access.
 export async function submitQuizResult(
   quizId: string,
   input: SubmitQuizInput,
@@ -104,24 +111,30 @@ export async function submitQuizResult(
     return { success: false, error: "You must be signed in." };
   }
 
+  const quiz = await prisma.quiz.findUnique({
+    where: { id: quizId },
+    select: { lessonId: true, lesson: { select: { courseId: true } } },
+  });
+  if (!quiz) {
+    return { success: false, error: "Quiz not found." };
+  }
+
+  const lesson = await getLessonById(quiz.lessonId);
+  if (!lesson || lesson.locked) {
+    return { success: false, error: "You don't have access to this lesson." };
+  }
+
   const result = await submitQuiz(quizId, input);
   if (!result.success) {
     return result;
   }
 
-  const quiz = await prisma.quiz.findUnique({
-    where: { id: quizId },
-    select: { lessonId: true, lesson: { select: { courseId: true } } },
+  await markLessonCompleted(quiz.lessonId, {
+    score: result.score,
+    percentage: result.percentage,
+    passed: result.passed,
   });
-
-  if (quiz) {
-    await markLessonCompleted(quiz.lessonId, {
-      score: result.score,
-      percentage: result.percentage,
-      passed: result.passed,
-    });
-    await unlockNextLesson(quiz.lesson.courseId);
-  }
+  await unlockNextLesson(quiz.lesson.courseId);
 
   return result;
 }

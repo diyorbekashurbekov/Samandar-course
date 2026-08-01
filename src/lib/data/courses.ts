@@ -6,7 +6,7 @@ import type { Prisma } from "@/generated/prisma/client";
 const courseWithCounts = {
   include: {
     instructor: { select: { name: true, email: true } },
-    _count: { select: { lessons: true, enrollments: true } },
+    _count: { select: { lessons: true, enrollments: { where: { status: "ACTIVE" } } } },
   },
 } satisfies Prisma.CourseDefaultArgs;
 
@@ -48,7 +48,7 @@ export async function listPublishedCourses(): Promise<CourseSummary[]> {
 
 export async function listEnrolledCoursesForUser(userId: string): Promise<CourseSummary[]> {
   const enrollments = await prisma.enrollment.findMany({
-    where: { userId },
+    where: { userId, status: "ACTIVE" },
     orderBy: { enrolledAt: "desc" },
     include: { course: courseWithCounts },
   });

@@ -21,7 +21,7 @@ function computeUnlockedOrder(
 
 // Memoized per-request — layout.tsx (curriculum sidebar) and page.tsx (the
 // lesson itself) both need this for the same course/user, same pattern as
-// isEnrolledInCourse in src/lib/data/lessons.ts.
+// isUserEnrolled in src/lib/data/enrollment.ts.
 export const getUnlockedLessonOrder = cache(
   async (courseId: string, userId: string): Promise<number> => {
     const lessons = await prisma.lesson.findMany({

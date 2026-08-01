@@ -29,7 +29,7 @@ export default async function LessonPage({
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           {lesson.enrolled
             ? "Pass the previous lesson's quiz (if it has one) to move forward."
-            : "This lesson isn't a free preview, and enrollment/payment isn't implemented yet."}
+            : "This lesson isn't a free preview — enroll in the course to unlock it."}
         </p>
       </div>
     );
