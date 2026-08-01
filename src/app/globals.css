@@ -7,6 +7,17 @@
   --brand: #4f46e5;
   --brand-foreground: #ffffff;
   --plyr-color-main: var(--brand);
+
+  /* Marketing-only accent used for decorative gradients/glows (hero
+     background, blobs, section dividers) — never on interactive controls,
+     so the existing --brand identity used across admin/dashboard buttons
+     everywhere is untouched. */
+  --accent-violet: #a855f7;
+  --accent-fuchsia: #ec4899;
+
+  --surface-muted: #fafafa;
+  --border-subtle: rgb(24 24 27 / 0.08);
+  --shadow-color: 240 30% 20%;
 }
 
 @theme inline {
@@ -14,8 +25,17 @@
   --color-foreground: var(--foreground);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
+  --color-accent-violet: var(--accent-violet);
+  --color-accent-fuchsia: var(--accent-fuchsia);
+  --color-surface-muted: var(--surface-muted);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-display);
+
+  --animate-float: float 8s ease-in-out infinite;
+  --animate-float-delayed: float 8s ease-in-out 2.5s infinite;
+  --animate-gradient: gradient-shift 16s ease infinite;
+  --animate-shimmer: shimmer 1.8s ease-in-out infinite;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -24,11 +44,100 @@
     --foreground: #ededed;
     --brand: #818cf8;
     --brand-foreground: #0a0a0a;
+    --accent-violet: #c084fc;
+    --accent-fuchsia: #f472b6;
+    --surface-muted: #111113;
+    --border-subtle: rgb(255 255 255 / 0.08);
+    --shadow-color: 240 60% 3%;
   }
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--brand) 30%, transparent);
+}
+
+/* A visible, on-brand focus ring for every interactive element, keyboard or
+   not — deliberately not removed anywhere, in keeping with the
+   accessibility requirement that premium polish must never cost keyboard
+   usability. */
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -5%, 0) scale(1.05);
+  }
+}
+
+@keyframes gradient-shift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.premium-shadow {
+  box-shadow:
+    0 1px 2px hsl(var(--shadow-color) / 0.06),
+    0 8px 24px -8px hsl(var(--shadow-color) / 0.18);
+}
+
+.premium-shadow-lg {
+  box-shadow:
+    0 2px 4px hsl(var(--shadow-color) / 0.08),
+    0 24px 48px -12px hsl(var(--shadow-color) / 0.28);
+}
+
+.skeleton {
+  background: linear-gradient(
+    100deg,
+    var(--surface-muted) 40%,
+    color-mix(in oklab, var(--surface-muted), var(--foreground) 6%) 50%,
+    var(--surface-muted) 60%
+  );
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
